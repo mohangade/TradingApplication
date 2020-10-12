@@ -1,0 +1,57 @@
+﻿<Window x:Class="Trading_App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Trading_App"
+        mc:Ignorable="d" FontSize="16" 
+        Title="MainWindow" Height="600" Width="900" Closed="Window_Closed">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="20"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="20"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="1" Grid.Column="1" FontSize="30" Margin="0,0,0,10" Text="Trading Application" />
+
+        <TextBlock Grid.Row="2" Grid.Column="1"  Margin="0,0,0,10"  Text="Strike"/>
+        <TextBox Name ="txtStrike" Grid.Row="2" Grid.Column="2" Width="100" Margin="0,0,0,10" />
+
+        <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,0,0,10" Text="Call" />
+        <CheckBox Grid.Row="3" Grid.Column="2" Margin="0,0,0,10" IsChecked="True" Name="chkCallChecked"/>
+
+        <TextBlock Grid.Row="4" Grid.Column="1" Margin="0,0,0,10"  Text="Put"/>
+        <CheckBox Grid.Row="4" Grid.Column="2" Margin="0,0,0,10" IsChecked="True" Name="chkPutChecked"/>
+
+        <Button Grid.Row="5" Grid.Column="1" Width="60" Content="Entry" HorizontalAlignment="Left" Name="btnEntry" Margin="0,0,0,10" Click="btnEntry_Click"/>
+
+        <Button Grid.Row="6" Grid.Column="1" Width="60" Content="Exit All" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnExit" Click="btnExit_Click"></Button>
+        <Button Grid.Row="6" Grid.Column="2" Width="60" Content="Exit PE" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnPEExit" Click="btnPEExit_Click" ></Button>
+        <Button Grid.Row="6" Grid.Column="3" Width="70" Content="Exit CE" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnCEExit" Click="btnCEExit_Click" ></Button>
+        <Button Grid.Row="6" Grid.Column="4" Width="90" Content="Read Email" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnReadEmail" Click="btnReadEmail_Click" ></Button>
+        <Button Grid.Row="5" Grid.Column="5" Width="90" Content="Start MTM" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnMTMExit" Click="btnMTMExit_Click" Grid.ColumnSpan="2" Height="25" Grid.RowSpan="2" VerticalAlignment="Bottom" ></Button>
+        <TextBox Name ="txtMTMProfit" Grid.Row="6" Grid.Column="6" Width="100" Margin="0,0,0,10" />
+        <TextBlock Grid.Row="7" Grid.Column="1" Margin="0,0,0,10"  Text="Token generated"/>
+        <CheckBox Grid.Row="7" Grid.Column="1" Margin="150,0,0,10" IsChecked="True" Name="chkTokenGenerated"/>
+
+        <Button Grid.Row="7" Grid.Column="2" Width="120" Content="Generate Token" HorizontalAlignment="Left" Name="btnToken" Margin="0,0,0,10" Click="btnToken_Click"/>
+    </Grid>
+</Window>
