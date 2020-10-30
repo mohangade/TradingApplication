@@ -24,6 +24,7 @@ namespace AliceBlueWrapper
             ["token"] = "/oauth2/token",
             ["profile"] = "/api/v2/profile",
             ["balance"] = "/api/v2/cashposition",
+            ["day_position"]= "/api/v2/positions?type=daywise",
             ["master_contract"] = "/api/v2/contracts.json?exchanges=NFO",
             ["place_order"] = "/api/v2/order",
             ["get_orders"] = "/api/v2/order",
@@ -38,73 +39,85 @@ namespace AliceBlueWrapper
             httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri(baseUrl);
         }
-        public async Task<Token> LoginAndGetToken(string client_id, string client_secret, string password)
+        public async Task<Token> LoginAndGetToken(LoginDetail login)//string client_id, string client_secret, string userId, string password)
         {
-            string callback = "https://ant.aliceblueonline.com/plugin/callback";
-            string authUrl = baseUrl + urls["authorize"] + $"?response_type=code&state=test12345&client_id={client_id}&redirect_uri={callback}";
-
-            var response = await Get(authUrl);
-            string result = await response.Content.ReadAsStringAsync();
-
-            HtmlDocument htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(result);
-            string _csrf_token = htmlDocument.DocumentNode.SelectSingleNode("//input[@name='_csrf_token']").Attributes["value"].Value;
-            string login_challenge = htmlDocument.DocumentNode.SelectSingleNode("//input[@name='login_challenge']").Attributes["value"].Value;
-
-
-            Dictionary<string, string> keyValuePairs = new Dictionary<string, string>
+            try
             {
-                ["login_challenge"] = login_challenge,
-                ["client_id"] = client_id,
-                ["password"] = password,
-                ["_csrf_token"] = _csrf_token
-            };
-            response = await Post(response.RequestMessage.RequestUri.AbsoluteUri, keyValuePairs);
+                string callback = "https://ant.aliceblueonline.com/plugin/callback";
+                string authUrl = baseUrl + urls["authorize"] + $"?response_type=code&state=test12345&client_id={login.client_id}" +
+                    $"&redirect_uri={callback}";
 
-            keyValuePairs = new Dictionary<string, string>
+                var response = await Get(authUrl);
+
+                string result = await response.Content.ReadAsStringAsync();
+
+                HtmlDocument htmlDocument = new HtmlDocument();
+                htmlDocument.LoadHtml(result);
+                string _csrf_token = htmlDocument.DocumentNode.SelectSingleNode("//input[@name='_csrf_token']").Attributes["value"].Value;
+                string login_challenge = htmlDocument.DocumentNode.SelectSingleNode("//input[@name='login_challenge']").Attributes["value"].Value;
+
+
+                Dictionary<string, string> keyValuePairs = new Dictionary<string, string>
+                {
+                    ["login_challenge"] = login_challenge,
+                    ["client_id"] = login.userId,
+                    ["password"] = login.password,
+                    ["_csrf_token"] = _csrf_token
+                };
+                response = await Post(response.RequestMessage.RequestUri.AbsoluteUri, keyValuePairs);
+
+                keyValuePairs = new Dictionary<string, string>
+                {
+                    ["login_challenge"] = login_challenge,
+                    ["question_id1"] = "11,6",
+                    //["answer1"] = "a",
+                    //["answer2"] = "a",
+                    ["answer1"] = login.answer1,
+                    ["answer2"] = login.answer2,
+                    ["_csrf_token"] = _csrf_token
+                };
+                response = await Post(response.RequestMessage.RequestUri.AbsoluteUri, keyValuePairs);
+
+                keyValuePairs = new Dictionary<string, string>
+                {
+                    ["scopes"] = "",
+                    ["consent"] = "Authorize",
+                    ["_csrf_token"] = _csrf_token
+                };
+                response = await Post(response.RequestMessage.RequestUri.AbsoluteUri, keyValuePairs);
+
+                string code = response.RequestMessage.RequestUri.OriginalString;
+                code = code.Substring(code.IndexOf('=') + 1);
+                code = code.Substring(0, code.IndexOf('&'));
+
+                //get token
+                keyValuePairs = new Dictionary<string, string>
+                {
+                    ["code"] = code,
+                    ["redirect_uri"] = callback,
+                    ["grant_type"] = "authorization_code",
+                    ["cliend_id"] = login.client_id,
+                    ["client_secret"] = login.client_secret,
+                    ["_csrf_token"] = _csrf_token,
+                    ["auth_scheme"] = "basic_auth"
+                };
+                string requestUrl = baseUrl + urls["token"] +
+                    $"?client_id={login.client_id}&client_secret={login.client_secret}&grant_type=authorization_code&code={code}&redirect_uri={callback}&authorization_response={response.RequestMessage.RequestUri.AbsoluteUri}";
+                var authValue = new AuthenticationHeaderValue("Basic",
+                    Convert.ToBase64String(Encoding.UTF8.GetBytes($"{login.client_id}:{login.client_secret}")));
+
+                httpClient.DefaultRequestHeaders.Authorization = authValue;
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
+
+                response = await Post(requestUrl, keyValuePairs);
+                result = await response.Content.ReadAsStringAsync();
+                Token token = JsonConvert.DeserializeObject<Token>(result);
+                return token;
+            }
+            catch (Exception)
             {
-                ["login_challenge"] = login_challenge,
-                ["question_id1"] = "11,6",
-                ["answer1"] = "a",
-                ["answer2"] = "a",
-                ["_csrf_token"] = _csrf_token
-            };
-            response = await Post(response.RequestMessage.RequestUri.AbsoluteUri, keyValuePairs);
-
-            keyValuePairs = new Dictionary<string, string>
-            {
-                ["scopes"] = "",
-                ["consent"] = "Authorize",
-                ["_csrf_token"] = _csrf_token
-            };
-            response = await Post(response.RequestMessage.RequestUri.AbsoluteUri, keyValuePairs);
-
-            string code = response.RequestMessage.RequestUri.OriginalString;
-            code = code.Substring(code.IndexOf('=') + 1);
-            code = code.Substring(0, code.IndexOf('&'));
-
-            //get token
-            keyValuePairs = new Dictionary<string, string>
-            {
-                ["code"] = code,
-                ["redirect_uri"] = callback,
-                ["grant_type"] = "authorization_code",
-                ["cliend_id"] = client_id,
-                ["client_secret"] = client_secret,
-                ["_csrf_token"] = _csrf_token,
-                ["auth_scheme"] = "basic_auth"
-            };
-            string requestUrl = baseUrl + urls["token"] +
-                $"?client_id={client_id}&client_secret={client_secret}&grant_type=authorization_code&code={code}&redirect_uri={callback}&authorization_response={response.RequestMessage.RequestUri.AbsoluteUri}";
-            var authValue = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{client_id}:{client_secret}")));
-
-            httpClient.DefaultRequestHeaders.Authorization = authValue;
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
-
-            response = await Post(requestUrl, keyValuePairs);
-            result = await response.Content.ReadAsStringAsync();
-            Token token = JsonConvert.DeserializeObject<Token>(result);
-            return token;
+                throw new Exception("Login failed. Please check your credential.");
+            }
         }
 
         public async Task<string> GetMasterContract()
@@ -124,7 +137,7 @@ namespace AliceBlueWrapper
 
       
 
-        public async Task<string> PlaceOrder(string token, Order order)
+        public async Task<OrderResponse> PlaceOrder(string token, Order order)
         {
             httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
@@ -132,8 +145,8 @@ namespace AliceBlueWrapper
             IEnumerable<KeyValuePair<string, string>> keyvaluePairs = GetOrderData(order);
             var response = await Post(url, keyvaluePairs);
             string result = await response.Content.ReadAsStringAsync();
-            return result;
-
+            OrderResponse orderRespose = JsonConvert.DeserializeObject<OrderResponse>(result);
+            return orderRespose;
         }
        
 
@@ -185,7 +198,27 @@ namespace AliceBlueWrapper
             return orderHistory;
 
         }
+        public async Task<DayPosition> GetDayPosition(string token)
+        {
+            httpClient.DefaultRequestHeaders.Clear();
+            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+            string url = baseUrl + urls["day_position"];
+            var response = await Get(url);
+            string result = await response.Content.ReadAsStringAsync();
+            DayPosition dayPosition = JsonConvert.DeserializeObject<DayPosition>(result);
+            return dayPosition;           
+        }
 
+        public async Task<string> GetTradeBook(string token)
+        {
+            httpClient.DefaultRequestHeaders.Clear();
+            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+            string url = baseUrl + urls["trade_book"];
+            var response = await Get(url);
+            string result = await response.Content.ReadAsStringAsync();
+            return result;
+
+        }
         public async Task<dynamic> CancelOrder(string token,string orderId)
         {
             httpClient.DefaultRequestHeaders.Clear();
@@ -261,7 +294,7 @@ namespace AliceBlueWrapper
             }
             catch (Exception ex)
             {
-                return null;
+                throw ex;
             }
         }
 

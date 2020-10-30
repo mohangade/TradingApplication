@@ -3,16 +3,21 @@ using AliceBlueWrapper.Models;
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Configuration;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 using Trading_App.Common;
 using Trading_App.Model;
 using Trading_App.Processor;
 
 namespace Trading_App
 {
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -23,31 +28,45 @@ namespace Trading_App
         private GmailConnect gmailConnect;
         private MTMConnect mtmConnect;
         APIProcessor apiProcessor;
+        Helper helper;
         #endregion
-       
+
         public MainWindow()
         {
             InitializeComponent();
-            ReadSetting();
-            CheckToken();            
+
+            helper = new Helper();
+            tradeSetting = helper.ReadSetting();
             //SetGmailSetting();
-            apiProcessor = new APIProcessor(tradeSetting);
-            apiProcessor.LoadMasterContract();           
-        }        
-        private void ReadSetting()
-        {
-            tradeSetting = new TradeSetting
-            {
-                UserId = ConfigurationManager.AppSettings["UserId"],
-                Password = ConfigurationManager.AppSettings["Password"],
-                ClientSecret = ConfigurationManager.AppSettings["ClientSecret"],
-                Token = ConfigurationManager.AppSettings["Token"],
-                TokenCreatedOn = ConfigurationManager.AppSettings["TokenCreatedOn"],
-                Quantity = ConfigurationManager.AppSettings["Quantity"],
-                StopLossPercentage = ConfigurationManager.AppSettings["StopLossPercentage"],
-                ExpiryWeek = ConfigurationManager.AppSettings["ExpiryWeek"]
-            };
+            apiProcessor = new APIProcessor(tradeSetting,helper);
+            apiProcessor.LoadMasterContract();
+            apiProcessor.LogAdded += LogAdded;
+
+            mtmConnect = new MTMConnect(apiProcessor);
+            mtmConnect.OnMTMChanged += UpdateMTM;
+            mtmConnect.OnMTMTargetHit += MTMTargetHit;
+            mtmConnect.OnError += MTMConnectError;
+            CheckToken();
+            InitializeSetting();
         }
+
+        private void InitializeSetting()
+        {     
+            txtMTMProfit.Text  = tradeSetting.MTMProfit;
+        }
+
+        private void LogAdded(string logMessage)
+        {
+            if (!Thread.CurrentThread.IsBackground)
+                AddLogs(logMessage);
+            else
+                Dispatcher.BeginInvoke(new OnLogHandler(AddLogs), new object[] { logMessage });
+        }
+        private void AddLogs(string log)
+        {
+            txtLogs.Text += DateTime.Now.ToString() + ":  " + log + Environment.NewLine;
+        }
+       
         private void CheckToken()
         {
             if (!string.IsNullOrEmpty(tradeSetting.TokenCreatedOn) && !string.IsNullOrEmpty(tradeSetting.Token))
@@ -61,6 +80,8 @@ namespace Trading_App
                 chkTokenGenerated.IsChecked = false;
             }
         }
+
+        #region gmail setting
         private void SetGmailSetting()
         {
             gmailConnect = new GmailConnect();
@@ -71,86 +92,157 @@ namespace Trading_App
             await apiProcessor.GetOrderHistory();
             await apiProcessor.CancelAllPendingOrder();
         }
-          
+        #endregion
         private async void btnEntry_Click(object sender, RoutedEventArgs e)
         {
-            btnEntry.IsEnabled = false;
-            
-            if (txtStrike.Text == string.Empty)
-            {   
-                MessageBox.Show("Enter strike");
+            try
+            {
+                btnEntry.IsEnabled = false;
+
+                if (txtStrike.Text == string.Empty)
+                {
+                    MessageBox.Show("Enter strike");
+                    btnEntry.IsEnabled = true;
+                    return;
+                }
+
+                apiProcessor.Strike = txtStrike.Text;
+                await apiProcessor.PlaceEntryOrder();
+                System.Threading.Thread.Sleep(10000);
+                await apiProcessor.GetOrderHistory();
+                await apiProcessor.PlaceStopLossOrder(apiProcessor.ExecutedOrders);
                 btnEntry.IsEnabled = true;
-                return;
             }
-            apiProcessor.Strike = txtStrike.Text;
-            await apiProcessor.PlaceEntryOrder();
-            System.Threading.Thread.Sleep(2000);
-            await apiProcessor.GetOrderHistory();
-            await apiProcessor.PlaceStopLossOrder();
-            btnEntry.IsEnabled = true;
+            catch (Exception ex)
+            {
+                LogAdded(ex.Message);
+            }
         }
 
-      
         private async void btnToken_Click(object sender, RoutedEventArgs e)
         {
-            btnToken.IsEnabled = false;
-            await apiProcessor.Login();
-            chkTokenGenerated.IsChecked = true;
-            btnToken.IsEnabled = true;
+            try
+            {
+                btnToken.IsEnabled = false;
+                await apiProcessor.Login();
+                chkTokenGenerated.IsChecked = true;
+                btnToken.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                AddLogs(ex.Message);
+            }
         }
 
         private async void btnExit_Click(object sender, RoutedEventArgs e)
         {
             btnExit.IsEnabled = false;
-            await apiProcessor.GetOrderHistory(); 
+            apiProcessor.ExitOrderRetryCount = 3;
             await apiProcessor.ExitAllOrders();
-            
+
             btnExit.IsEnabled = true;
-        }
-
-        private void Window_Closed(object sender, EventArgs e)
-        {
-            if(apiProcessor != null)
-                apiProcessor.Dispose();
-            if(gmailConnect != null)
-                gmailConnect.Dispose();
-        }
-
-        private async void btnPEExit_Click(object sender, RoutedEventArgs e)
-        { 
-            btnPEExit.IsEnabled = false;
-            await apiProcessor.GetOrderHistory();
-            await apiProcessor.ExitPEOrders();
-            btnPEExit.IsEnabled = true;
-        }
-
-        private async void btnCEExit_Click(object sender, RoutedEventArgs e)
-        {
-            btnCEExit.IsEnabled = false;
-            await apiProcessor.GetOrderHistory();
-            await apiProcessor.ExitCEOrders();
-            btnCEExit.IsEnabled = true;
-        }
-
-        private void btnReadEmail_Click(object sender, RoutedEventArgs e)
-        {
-            if (btnReadEmail.Content.ToString() == "Read Email")
-            {
-                btnReadEmail.Content = "Stop Email";
-                SetGmailSetting();
-            }
-            else
-            {
-                btnReadEmail.Content = "Read Email";
-                gmailConnect.Dispose();
-            }
-            
         }
 
         private void btnMTMExit_Click(object sender, RoutedEventArgs e)
         {
-            mtmConnect = new MTMConnect(apiProcessor);
-            
+            // await apiProcessor.GetDayPosition();
+            if (btnMTMExit.Content.ToString().Contains("Start"))
+                StartMTM();
+            else
+                StopMTM();
+        }
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            if (apiProcessor != null)
+                apiProcessor.Dispose();
+            if (gmailConnect != null)
+                gmailConnect.Dispose();
+        }
+
+        #region Commented Code
+        //private async void btnPEExit_Click(object sender, RoutedEventArgs e)
+        //{
+        //    btnPEExit.IsEnabled = false;
+        //    await apiProcessor.GetOrderHistory();
+        //    await apiProcessor.ExitPEOrders();
+        //    btnPEExit.IsEnabled = true;
+        //}
+
+        //private async void btnCEExit_Click(object sender, RoutedEventArgs e)
+        //{
+        //    btnCEExit.IsEnabled = false;
+        //    await apiProcessor.GetOrderHistory();
+        //    await apiProcessor.ExitCEOrders();
+        //    btnCEExit.IsEnabled = true;
+        //}
+
+        //private void btnReadEmail_Click(object sender, RoutedEventArgs e)
+        //{
+        //    if (btnReadEmail.Content.ToString() == "Read Email")
+        //    {
+        //        btnReadEmail.Content = "Stop Email";
+        //        SetGmailSetting();
+        //    }
+        //    else
+        //    {
+        //        btnReadEmail.Content = "Read Email";
+        //        gmailConnect.Dispose();
+        //    }
+        //} 
+        #endregion      
+
+        #region MTM 
+        private void StartMTM()
+        {
+            if (txtMTMProfit.Text.Trim() == string.Empty)
+            {
+                MessageBox.Show("Please enter target MTM value.");
+                return;
+            }
+            apiProcessor.TargetMTM = txtMTMProfit.Text;
+            apiProcessor.MaxMTMLoss = tradeSetting.MTMLoss;
+            mtmConnect.TimerStart();
+            btnMTMExit.Content = "Stop MTM";           
+            AddLogs("MTM timer started.");
+        }
+        private void StopMTM()
+        {
+            btnMTMExit.Content = "Start MTM";
+            tblMTM.Text = "MTM value";
+            mtmConnect.TimerStop();
+            AddLogs("MTM timer ended.");
+        }
+        private void MTMTargetHit(string message)
+        {
+            try
+            {
+                LogAdded(message);
+                string finalMTM = mtmConnect.GetFinalMTM().ToString();
+                UpdateMTM(finalMTM);
+                Dispatcher.BeginInvoke(new Action(StopMTM), null);
+            }
+            catch (Exception ex)
+            {
+                LogAdded(ex.Message);
+            }           
+        }
+        private void SetMTM(string mtmVal)
+        {
+            tblMTM.Text = mtmVal;
+        }
+        private void UpdateMTM(string mtmVal)
+        {
+            Dispatcher.BeginInvoke(new MTMHandler(SetMTM), new object[] { mtmVal });
+        }
+        private void MTMConnectError(string errorMessage)
+        {
+            LogAdded(errorMessage);
+        }
+        #endregion
+
+        private void txtLogs_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            return;
         }
     }
 }

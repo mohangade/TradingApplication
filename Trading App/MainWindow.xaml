@@ -5,8 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Trading_App"
         mc:Ignorable="d" FontSize="16" 
-        Title="MainWindow" Height="600" Width="900" Closed="Window_Closed">
+        Title="Trading App" Height="600" Width="900" Closed="Window_Closed" WindowState="Maximized" Foreground="#FFC26C6C" >
+    <Window.Background>
+        <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+            <GradientStop Color="Black"/>
+            <GradientStop Color="White" Offset="1"/>
+        </LinearGradientBrush>
+    </Window.Background>
     <Grid>
+        <Grid.Background>
+            <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                <GradientStop Color="Black"/>
+                <GradientStop Color="#FFBC3737" Offset="1"/>
+            </LinearGradientBrush>
+        </Grid.Background>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="20"/>
             <ColumnDefinition Width="auto"/>
@@ -30,10 +42,10 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="1" Grid.Column="1" FontSize="30" Margin="0,0,0,10" Text="Trading Application" />
-
+        <TextBlock Grid.Row="1" Grid.Column="1" FontSize="30" Margin="0,0,0,10" Text="Mohan Gade's Application..." Foreground="White"/>
+        <!--<Image Grid.Row="1" Grid.Column="1"  Margin="0,0,0,10" Grid.ColumnSpan="6" Source="/header.jpg" Stretch="UniformToFill" Height="80" ></Image>-->
         <TextBlock Grid.Row="2" Grid.Column="1"  Margin="0,0,0,10"  Text="Strike"/>
-        <TextBox Name ="txtStrike" Grid.Row="2" Grid.Column="2" Width="100" Margin="0,0,0,10" />
+        <TextBox Name ="txtStrike" Grid.Row="2" Grid.Column="2" Width="100" Margin="0,0,0,10" HorizontalAlignment="Left"/>
 
         <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,0,0,10" Text="Call" />
         <CheckBox Grid.Row="3" Grid.Column="2" Margin="0,0,0,10" IsChecked="True" Name="chkCallChecked"/>
@@ -43,15 +55,17 @@
 
         <Button Grid.Row="5" Grid.Column="1" Width="60" Content="Entry" HorizontalAlignment="Left" Name="btnEntry" Margin="0,0,0,10" Click="btnEntry_Click"/>
 
-        <Button Grid.Row="6" Grid.Column="1" Width="60" Content="Exit All" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnExit" Click="btnExit_Click"></Button>
-        <Button Grid.Row="6" Grid.Column="2" Width="60" Content="Exit PE" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnPEExit" Click="btnPEExit_Click" ></Button>
-        <Button Grid.Row="6" Grid.Column="3" Width="70" Content="Exit CE" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnCEExit" Click="btnCEExit_Click" ></Button>
-        <Button Grid.Row="6" Grid.Column="4" Width="90" Content="Read Email" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnReadEmail" Click="btnReadEmail_Click" ></Button>
-        <Button Grid.Row="5" Grid.Column="5" Width="90" Content="Start MTM" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnMTMExit" Click="btnMTMExit_Click" Grid.ColumnSpan="2" Height="25" Grid.RowSpan="2" VerticalAlignment="Bottom" ></Button>
-        <TextBox Name ="txtMTMProfit" Grid.Row="6" Grid.Column="6" Width="100" Margin="0,0,0,10" />
+        <Button Grid.Row="5" Grid.Column="2" Width="60" Content="Exit" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnExit" Click="btnExit_Click"></Button>
+        <!--<Button Grid.Row="6" Grid.Column="2" Width="60" Content="Exit PE" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnPEExit" Click="btnPEExit_Click" ></Button>
+        <Button Grid.Row="6" Grid.Column="3" Width="70" Content="Exit CE" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnCEExit" Click="btnCEExit_Click" ></Button>-->
+        <!--<Button Grid.Row="6" Grid.Column="4" Width="90" Content="Read Email" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnReadEmail" Click="btnReadEmail_Click" ></Button>-->
+        <Button Grid.Row="5" Grid.Column="1" Width="90" Content="Start MTM" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnMTMExit" Click="btnMTMExit_Click" Grid.ColumnSpan="2" Height="25" Grid.RowSpan="2" VerticalAlignment="Bottom" ></Button>
+        <TextBox Name ="txtMTMProfit" Grid.Row="6" Grid.Column="2" Width="100" Margin="0,0,0,10" HorizontalAlignment="Left" />
+        <TextBlock  Grid.Row="6" Grid.Column="3" Margin="0,0,0,10" Foreground="White" Name="tblMTM">MTM value</TextBlock>
         <TextBlock Grid.Row="7" Grid.Column="1" Margin="0,0,0,10"  Text="Token generated"/>
         <CheckBox Grid.Row="7" Grid.Column="1" Margin="150,0,0,10" IsChecked="True" Name="chkTokenGenerated"/>
-
-        <Button Grid.Row="7" Grid.Column="2" Width="120" Content="Generate Token" HorizontalAlignment="Left" Name="btnToken" Margin="0,0,0,10" Click="btnToken_Click"/>
+        <Button Grid.Row="6" Grid.Column="2" Width="120" Content="Generate Token" HorizontalAlignment="Center" Name="btnToken" Margin="0,35,0,0" Click="btnToken_Click" Height="26" Grid.RowSpan="2" VerticalAlignment="Top"/>
+        <TextBox Name ="txtLogs" Grid.ColumnSpan="7" Grid.Row="9"  Margin="10,10,10,10"  
+                 VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" IsEnabled="True" KeyDown="txtLogs_KeyDown"/>
     </Grid>
 </Window>
