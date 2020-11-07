@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AliceBlueWrapper\AliceBlueWrapper.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="AliceBlueWrapper">
       <HintPath>References\AliceBlueWrapper.dll</HintPath>
     </Reference>
@@ -37,6 +41,10 @@
     <None Update="Data\contract.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="References\" />
   </ItemGroup>
 
 </Project>

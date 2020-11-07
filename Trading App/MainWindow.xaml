@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Trading_App"
         mc:Ignorable="d" FontSize="16" 
-        Title="Trading App" Height="600" Width="900" Closed="Window_Closed" WindowState="Maximized" Foreground="#FFC26C6C" >
+        Title="Trading App" Height="600" Width="900" Closed="Window_Closed" WindowState="Normal"  Foreground="#FFC26C6C" >
     <Window.Background>
         <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
             <GradientStop Color="Black"/>
@@ -42,30 +42,65 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="1" Grid.Column="1" FontSize="30" Margin="0,0,0,10" Text="Mohan Gade's Application..." Foreground="White"/>
+        <TextBlock Grid.Row="1" Grid.Column="6" FontSize="30" Margin="0,0,0,10" Text="Mohan Gade's Application..." Foreground="White"/>
         <!--<Image Grid.Row="1" Grid.Column="1"  Margin="0,0,0,10" Grid.ColumnSpan="6" Source="/header.jpg" Stretch="UniformToFill" Height="80" ></Image>-->
+
+        <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,10,0,0"  Text="Token generated"/>
+        <CheckBox Grid.Row="1" Grid.Column="1" Margin="140,15,10,10" IsChecked="True" Name="chkTokenGenerated"/>
+        <Button Grid.Row="1" Grid.Column="2" Width="100" Content="Generate" HorizontalAlignment="Left"  Name="btnToken" Click="btnToken_Click" Height="26" />
+
+
         <TextBlock Grid.Row="2" Grid.Column="1"  Margin="0,0,0,10"  Text="Strike"/>
-        <TextBox Name ="txtStrike" Grid.Row="2" Grid.Column="2" Width="100" Margin="0,0,0,10" HorizontalAlignment="Left"/>
+        <TextBox  Grid.Row="2" Grid.Column="2" Name ="txtStrike" Width="100" Margin="0,0,0,10" HorizontalAlignment="Left"/>
 
-        <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,0,0,10" Text="Call" />
-        <CheckBox Grid.Row="3" Grid.Column="2" Margin="0,0,0,10" IsChecked="True" Name="chkCallChecked"/>
+        <!--<TextBlock Grid.Row="3" Grid.Column="1" Margin="0,0,0,10" Text="Call" />-->
+        <CheckBox Grid.Row="2" Grid.Column="5" IsChecked="True" Foreground="#FFC26C6C" Name="chkCallChecked">CE</CheckBox>
+        <CheckBox Grid.Row="2" Grid.Column="5" IsChecked="True" Margin="60,0,0,0" Foreground="#FFC26C6C" Name="chkPutChecked">PE</CheckBox>
 
-        <TextBlock Grid.Row="4" Grid.Column="1" Margin="0,0,0,10"  Text="Put"/>
-        <CheckBox Grid.Row="4" Grid.Column="2" Margin="0,0,0,10" IsChecked="True" Name="chkPutChecked"/>
+
+        <TextBlock Grid.Row="3" Grid.Column="1"  Margin="0,0,0,10"  Text="OTM Diff"/>
+        <TextBox  Grid.Row="3" Grid.Column="2" Name ="txtOTMDiff" Width="100" Margin="0,0,0,10" HorizontalAlignment="Left"/>
+
+
+
+
+        <TextBlock  Grid.Row="3" Grid.Column="5" Margin="0,0,0,10" ><Run Text="Expiry Week : "/></TextBlock>
+        <TextBlock  Grid.Row="3" Grid.Column="6" Margin="0,0,0,10" Foreground="White" x:Name="tblExpiryWeek"></TextBlock>
+
+        <!--<TextBlock Grid.Row="4" Grid.Column="1" Margin="0,0,0,10"  Text="Put"/>
+        <CheckBox Grid.Row="4" Grid.Column="2" Margin="0,0,0,10" IsChecked="True" Name="chkPutChecked"/>-->
+
+        <TextBlock Grid.Row="4" Grid.Column="1" Margin="0,0,0,10"  Text="Strangle"/>
+        <CheckBox Grid.Row="4" Grid.Column="2" Margin="0,0,0,10" IsChecked="False" Name="chkStrangleChecked"/>
+
+        <TextBlock  Grid.Row="4" Grid.Column="5" Margin="0,0,0,10" ><Run Text="SL in % : "/></TextBlock>
+        <TextBlock  Grid.Row="4" Grid.Column="6" Margin="0,0,0,10" Foreground="White" x:Name="tblSL" ></TextBlock>
 
         <Button Grid.Row="5" Grid.Column="1" Width="60" Content="Entry" HorizontalAlignment="Left" Name="btnEntry" Margin="0,0,0,10" Click="btnEntry_Click"/>
-
         <Button Grid.Row="5" Grid.Column="2" Width="60" Content="Exit" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnExit" Click="btnExit_Click"></Button>
         <!--<Button Grid.Row="6" Grid.Column="2" Width="60" Content="Exit PE" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnPEExit" Click="btnPEExit_Click" ></Button>
         <Button Grid.Row="6" Grid.Column="3" Width="70" Content="Exit CE" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnCEExit" Click="btnCEExit_Click" ></Button>-->
         <!--<Button Grid.Row="6" Grid.Column="4" Width="90" Content="Read Email" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnReadEmail" Click="btnReadEmail_Click" ></Button>-->
         <Button Grid.Row="5" Grid.Column="1" Width="90" Content="Start MTM" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnMTMExit" Click="btnMTMExit_Click" Grid.ColumnSpan="2" Height="25" Grid.RowSpan="2" VerticalAlignment="Bottom" ></Button>
-        <TextBox Name ="txtMTMProfit" Grid.Row="6" Grid.Column="2" Width="100" Margin="0,0,0,10" HorizontalAlignment="Left" />
-        <TextBlock  Grid.Row="6" Grid.Column="3" Margin="0,0,0,10" Foreground="White" Name="tblMTM">MTM value</TextBlock>
-        <TextBlock Grid.Row="7" Grid.Column="1" Margin="0,0,0,10"  Text="Token generated"/>
-        <CheckBox Grid.Row="7" Grid.Column="1" Margin="150,0,0,10" IsChecked="True" Name="chkTokenGenerated"/>
-        <Button Grid.Row="6" Grid.Column="2" Width="120" Content="Generate Token" HorizontalAlignment="Center" Name="btnToken" Margin="0,35,0,0" Click="btnToken_Click" Height="26" Grid.RowSpan="2" VerticalAlignment="Top"/>
-        <TextBox Name ="txtLogs" Grid.ColumnSpan="7" Grid.Row="9"  Margin="10,10,10,10"  
+
+        <TextBlock  Grid.Row="5" Grid.Column="5" Margin="0,0,0,10" ><Run Text="Max Profit : "/></TextBlock>
+        <TextBox  Grid.Row="5" Grid.Column="6" Name ="txtMaxProfit" Width="100" Margin="0,0,0,10" HorizontalAlignment="Left"/>
+
+        <!--<TextBox Grid.Row="6" Grid.Column="2" Name ="txtMTMProfit"  Width="100" Margin="0,0,0,10" HorizontalAlignment="Left" />-->
+        <TextBlock  Grid.Row="6" Grid.Column="2" Width="120" Margin="0,0,0,10" Foreground="White" FontWeight="Bold" Name="tblMTM">MTM value</TextBlock>
+
+        <TextBlock  Grid.Row="6" Grid.Column="5" Margin="0,0,0,10" ><Run Text="Max Loss : "/></TextBlock>
+        <TextBox  Grid.Row="6" Grid.Column="6" Name ="txtMaxLoss" Width="100" Margin="0,0,0,10" HorizontalAlignment="Left"/>
+
+
+        <Button Grid.Row="7" Grid.Column="6" Width="100" Content="Update" HorizontalAlignment="Left" Name="btnUpdate"  Click="btnUpdate_Click" Height="26" />
+        <Button Grid.Row="7" Grid.Column="6" Width="150" Margin="10,0,0,0" Content="Get Master Contract"  Name="btnMasterContract"  Click="btnMasterContract_Click" Height="26" />
+
+        <TextBox Grid.Row="9" Name ="txtLogs" Grid.ColumnSpan="7"   Margin="10,10,10,10"  
                  VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" IsEnabled="True" KeyDown="txtLogs_KeyDown"/>
+
+
+
+
     </Grid>
 </Window>

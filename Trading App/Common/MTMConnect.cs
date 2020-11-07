@@ -22,8 +22,8 @@ namespace Trading_App.Common
         Timer timer;
         APIProcessor apiProcessor;
         bool timerStop = false;
-        double targerMTM = 0;
-        double maxLossMTM = 2000;
+        public double TargerMTM = 0;
+        public double MaxLossMTM = -2000;
         DayPosition dayPosition;
         public MTMConnect(APIProcessor apiProcessor)
         {
@@ -35,11 +35,11 @@ namespace Trading_App.Common
         }
         public void TimerStart()
         {
-            double.TryParse(apiProcessor.TargetMTM, out targerMTM);
-            double.TryParse(apiProcessor.MaxMTMLoss, out maxLossMTM);
+            //double.TryParse(apiProcessor.TargetMTM, out targerMTM);
+            //double.TryParse(apiProcessor.MaxMTMLoss, out maxLossMTM);
             timer.Elapsed += new ElapsedEventHandler(Timer_Elapsed);
             timer.Start();
-            timerStop = false;            
+            timerStop = false;
         }
         public void TimerStop()
         {
@@ -57,7 +57,7 @@ namespace Trading_App.Common
                 {
                     double mtmVal = GetMTMValue(dayPosition);
                     OnMTMChanged?.Invoke((mtmVal.ToString()));
-                    if ((mtmVal >= targerMTM || mtmVal <= maxLossMTM )&& !timerStop)
+                    if ((mtmVal >= TargerMTM || mtmVal <= MaxLossMTM) && !timerStop)
                     {
                         TimerStop();
                         apiProcessor.ExitOrderRetryCount = 3;
@@ -87,6 +87,8 @@ namespace Trading_App.Common
             dayPosition = await apiProcessor.GetDayPosition();
             return GetMTMValue(dayPosition);
         }
+
+
         public void Dispose()
         {
             if (timer != null)

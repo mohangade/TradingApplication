@@ -23,18 +23,20 @@ namespace Trading_App.Processor
         private TradeSetting tradeSetting;
         private List<Instrument> masterContact;
         private Helper helper;
-        
+
         #endregion
 
-
+        public bool IsStrangleChecked = false;
+        public int OTMDiff = 0;
         public int ExitOrderRetryCount = 3;
         public event OnLogHandler LogAdded;
-        public string Strike { get; set; }
+        public int Strike { get; set; }
         public CashDetail Cash { get; set; }
-        public string TargetMTM { get; set; }
-        public string MaxMTMLoss { get; set; }
+        public bool IsCEChecked = false;
+        public bool IsPEChecked = false;
+
         public List<OrderResponse> ExecutedOrders { get; set; }
-        public APIProcessor(TradeSetting tradeSetting,Helper helper)
+        public APIProcessor(TradeSetting tradeSetting, Helper helper)
         {
             aliceBlue = new AliceBlue();
             this.tradeSetting = tradeSetting;
@@ -45,10 +47,41 @@ namespace Trading_App.Processor
 
         public void LoadMasterContract()
         {
-            string masterContractJson =
+            try
+            {
+                string masterContractJson =
                 System.IO.File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}\\Data\\contract.json");
-            JToken jToken = JToken.Parse(masterContractJson).SelectToken("$.NSE-OPT");
-            masterContact = JsonConvert.DeserializeObject<List<Instrument>>(jToken.ToString());
+                JToken jToken = JToken.Parse(masterContractJson).SelectToken("$.NSE-OPT");
+                masterContact = JsonConvert.DeserializeObject<List<Instrument>>(jToken.ToString());
+            }
+            catch (Exception ex)
+            {
+                LogAdded("Error while loading master contract.");
+                LogAdded(ex.Message);
+            }
+        }
+
+        public async Task GetMasterContract()
+        {
+            try
+            {
+                string masterContractJson = string.Empty;
+
+                masterContractJson = await aliceBlue.GetMasterContract();
+                System.IO.File.WriteAllText($"{AppDomain.CurrentDomain.BaseDirectory}\\Data\\contract.json", masterContractJson);
+                if (!string.IsNullOrEmpty(masterContractJson))
+                {
+                    LogAdded("Master contract downloaded successfully.");
+                    LoadMasterContract();
+                }
+                else
+                    LogAdded("Error Master contract download failed.");
+            }
+
+            catch (Exception ex)
+            {
+                LogAdded(ex.Message);
+            }
         }
 
         public async Task Login()
@@ -56,7 +89,7 @@ namespace Trading_App.Processor
             try
             {
                 LoginDetail loginDetail = new LoginDetail
-                {                    
+                {
                     client_id = tradeSetting.ClientId,
                     client_secret = tradeSetting.ClientSecret,
                     userId = tradeSetting.UserId,
@@ -86,34 +119,50 @@ namespace Trading_App.Processor
         {
             try
             {
+                OrderResponse response = null;
+                int ceStrike = Strike;
+                int peStrike = Strike;
+
+                if (IsStrangleChecked)
+                {
+                    ceStrike = Strike + OTMDiff;
+                    peStrike = Strike - OTMDiff;
+                }
+
                 //place CE order
-                OrderResponse res = await aliceBlue.PlaceOrder(tradeSetting.Token,
-                    new Order
-                    {
-                        order_type = OrderType.Market,
-                        instrument_token = GetInstrumentTokenForFNO($"BANKNIFTY {tradeSetting.ExpiryWeek} {Strike} CE"),
-                        quantity = tradeSetting.Quantity,
-                        transaction_type = TransactionType.Sell,
-                        product = ProductType.Intraday
-                    });
-                ExecutedOrders.Add(res);
-                LogAdded($"BANKNIFTY {tradeSetting.ExpiryWeek} {Strike} CE  : {res.message} status: {res.status}");
+                if (IsCEChecked)
+                {
+                    response = await aliceBlue.PlaceOrder(tradeSetting.Token,
+                        new Order
+                        {
+                            order_type = OrderType.Market,
+                            instrument_token = GetInstrumentTokenForFNO($"BANKNIFTY {tradeSetting.ExpiryWeek} {ceStrike} CE"),
+                            quantity = tradeSetting.Quantity,
+                            transaction_type = TransactionType.Sell,
+                            product = ProductType.Intraday
+                        });
+                    ExecutedOrders.Add(response);
+                    LogAdded($"BANKNIFTY {tradeSetting.ExpiryWeek} {ceStrike} CE  : {response.message} status: {response.status}");
+                }
                 //place PE order
-                res = await aliceBlue.PlaceOrder(tradeSetting.Token,
+                if (IsPEChecked)
+                {
+                    response = await aliceBlue.PlaceOrder(tradeSetting.Token,
                      new Order
                      {
                          order_type = OrderType.Market,
-                         instrument_token = GetInstrumentTokenForFNO($"BANKNIFTY {tradeSetting.ExpiryWeek} {Strike} PE"),
+                         instrument_token = GetInstrumentTokenForFNO($"BANKNIFTY {tradeSetting.ExpiryWeek} {peStrike} PE"),
                          quantity = tradeSetting.Quantity,
                          transaction_type = TransactionType.Sell,
                          product = ProductType.Intraday
                      });
-                ExecutedOrders.Add(res);
-                LogAdded($"BANKNIFTY {tradeSetting.ExpiryWeek} {Strike} PE  : {res.message} status: {res.status}");
+                    ExecutedOrders.Add(response);
+                    LogAdded($"BANKNIFTY {tradeSetting.ExpiryWeek} {peStrike} PE  : {response.message} status: {response.status}");
+                }
             }
             catch (Exception ex)
             {
-                LogAdded(ex.Message);
+                LogAdded("PlaceEntryOrder failed");
                 LogAdded(ex.Message);
             }
         }
@@ -149,12 +198,13 @@ namespace Trading_App.Processor
                             response = await aliceBlue.PlaceOrder(tradeSetting.Token,
                                 new Order
                                 {
-                                    order_type = OrderType.StopLossMarket,
+                                    order_type = OrderType.StopLossLimit,
                                     instrument_token = order.instrument_token,
                                     quantity = order.quantity,
                                     transaction_type = transactionType,
                                     product = order.product,
-                                    trigger_price = ((int)orderPrice).ToString()
+                                    trigger_price = ((int)orderPrice).ToString(),
+                                    price = ((int)orderPrice).ToString()
                                 });
                         }
                         LogAdded($"StopLoss order for { order.trading_symbol} placed.");
@@ -250,7 +300,7 @@ namespace Trading_App.Processor
             catch (Exception ex)
             {
                 LogAdded("ExitAllOrders failed");
-                if(ExitOrderRetryCount != 0)
+                if (ExitOrderRetryCount != 0)
                 {
                     ExitOrderRetryCount--;
                     Thread.Sleep(500);

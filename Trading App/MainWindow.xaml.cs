@@ -38,7 +38,7 @@ namespace Trading_App
             helper = new Helper();
             tradeSetting = helper.ReadSetting();
             //SetGmailSetting();
-            apiProcessor = new APIProcessor(tradeSetting,helper);
+            apiProcessor = new APIProcessor(tradeSetting, helper);
             apiProcessor.LoadMasterContract();
             apiProcessor.LogAdded += LogAdded;
 
@@ -51,8 +51,12 @@ namespace Trading_App
         }
 
         private void InitializeSetting()
-        {     
-            txtMTMProfit.Text  = tradeSetting.MTMProfit;
+        {
+            txtMaxProfit.Text = tradeSetting.MTMProfit;
+            txtMaxLoss.Text = tradeSetting.MTMLoss;
+            tblExpiryWeek.Text = tradeSetting.ExpiryWeek;
+            tblSL.Text = tradeSetting.StopLossPercentage;
+            txtOTMDiff.Text = tradeSetting.OTMDiff;
         }
 
         private void LogAdded(string logMessage)
@@ -66,7 +70,7 @@ namespace Trading_App
         {
             txtLogs.Text += DateTime.Now.ToString() + ":  " + log + Environment.NewLine;
         }
-       
+
         private void CheckToken()
         {
             if (!string.IsNullOrEmpty(tradeSetting.TokenCreatedOn) && !string.IsNullOrEmpty(tradeSetting.Token))
@@ -106,7 +110,27 @@ namespace Trading_App
                     return;
                 }
 
-                apiProcessor.Strike = txtStrike.Text;
+                if (chkCallChecked.IsChecked == false && chkPutChecked.IsChecked == false)
+                {
+                    MessageBox.Show("Please select CE / PE option.");
+                    btnEntry.IsEnabled = true;
+                    return;
+                }
+
+                apiProcessor.IsCEChecked = Convert.ToBoolean(chkCallChecked.IsChecked);
+                apiProcessor.IsPEChecked = Convert.ToBoolean(chkPutChecked.IsChecked);
+
+                apiProcessor.IsStrangleChecked = Convert.ToBoolean(chkStrangleChecked.IsChecked);
+                apiProcessor.Strike = Convert.ToInt32(txtStrike.Text);
+
+                if (apiProcessor.IsStrangleChecked)
+                {
+                    if (!string.IsNullOrEmpty(txtOTMDiff.Text))
+                        apiProcessor.OTMDiff = Convert.ToInt32(txtOTMDiff.Text);
+                    else
+                        apiProcessor.OTMDiff = 0;
+                }
+
                 await apiProcessor.PlaceEntryOrder();
                 System.Threading.Thread.Sleep(10000);
                 await apiProcessor.GetOrderHistory();
@@ -194,15 +218,17 @@ namespace Trading_App
         #region MTM 
         private void StartMTM()
         {
-            if (txtMTMProfit.Text.Trim() == string.Empty)
+            if (txtMaxProfit.Text.Trim() == string.Empty)
             {
                 MessageBox.Show("Please enter target MTM value.");
                 return;
             }
-            apiProcessor.TargetMTM = txtMTMProfit.Text;
-            apiProcessor.MaxMTMLoss = tradeSetting.MTMLoss;
+
+            double.TryParse(txtMaxProfit.Text, out mtmConnect.TargerMTM);
+            double.TryParse(txtMaxLoss.Text, out mtmConnect.MaxLossMTM);
+
             mtmConnect.TimerStart();
-            btnMTMExit.Content = "Stop MTM";           
+            btnMTMExit.Content = "Stop MTM";
             AddLogs("MTM timer started.");
         }
         private void StopMTM()
@@ -224,7 +250,7 @@ namespace Trading_App
             catch (Exception ex)
             {
                 LogAdded(ex.Message);
-            }           
+            }
         }
         private void SetMTM(string mtmVal)
         {
@@ -243,6 +269,38 @@ namespace Trading_App
         private void txtLogs_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             return;
+        }
+
+        private void btnUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                tradeSetting.MTMProfit = txtMaxProfit.Text;
+                tradeSetting.MTMLoss = txtMaxLoss.Text;
+
+                mtmConnect.TargerMTM = double.Parse(txtMaxProfit.Text);
+                mtmConnect.MaxLossMTM = double.Parse(txtMaxLoss.Text);
+
+                AddLogs("MTM values updated.");
+            }
+            catch (Exception ex)
+            {
+                AddLogs("Error while updating MTM values.");
+            }
+        }
+
+        private async void btnMasterContract_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+
+                await apiProcessor.GetMasterContract();
+
+            }
+            catch (Exception ex)
+            {
+                AddLogs("Error while downloading master contract.");
+            }
         }
     }
 }

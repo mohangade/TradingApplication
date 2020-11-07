@@ -19,6 +19,7 @@ namespace Trading_App.Model
         public string ExpiryWeek { get; set; }
         public string MTMProfit { get; set; }
         public string MTMLoss { get; set; }
-
+        public bool IsStrangle { get; set; }
+        public string OTMDiff { get; set; }
     }
 }
