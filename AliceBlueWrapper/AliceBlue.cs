@@ -33,11 +33,12 @@ namespace AliceBlueWrapper
             ["cancel_order"] = "/api/v2/order?oms_order_id={0}&order_status=open",
             ["trade_book"] = "/api/v2/trade"
         };
-
+        
         public AliceBlue()
         {
             httpClient = new HttpClient();
             httpClient.BaseAddress = new Uri(baseUrl);
+
         }
         public async Task<Token> LoginAndGetToken(LoginDetail login)//string client_id, string client_secret, string userId, string password)
         {

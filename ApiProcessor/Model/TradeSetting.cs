@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Trading_App.Model
+namespace ApiProcessor.Model
 {
     public class TradeSetting
     {

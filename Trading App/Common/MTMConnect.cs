@@ -1,31 +1,34 @@
 ﻿using AliceBlueWrapper;
 using AliceBlueWrapper.Models;
+using ApiProcessor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
-using Trading_App.Processor;
 
 namespace Trading_App.Common
 {
-    public delegate void MTMHandler(string value);
+    public delegate void MTMHandler(MTMDetail mTMDetail);
+    public delegate void LogHandler(string message);
     public class MTMConnect : IDisposable
     {
 
 
         public event MTMHandler OnMTMChanged;
-        public event MTMHandler OnMTMTargetHit;
+        public event LogHandler OnMTMTargetHit;
         public event OnErrorHandler OnError;
 
         Timer timer;
-        APIProcessor apiProcessor;
+        BaseProcessor apiProcessor;
         bool timerStop = false;
         public double TargerMTM = 0;
         public double MaxLossMTM = -2000;
+        double High { get; set; }
+        double Low { get; set; }
         DayPosition dayPosition;
-        public MTMConnect(APIProcessor apiProcessor)
+        public MTMConnect(BaseProcessor apiProcessor)
         {
             this.apiProcessor = apiProcessor;
             timer = new Timer
@@ -56,7 +59,8 @@ namespace Trading_App.Common
                 if (dayPosition.data.positions.Any())
                 {
                     double mtmVal = GetMTMValue(dayPosition);
-                    OnMTMChanged?.Invoke((mtmVal.ToString()));
+                    OnMTMChanged?.Invoke(new MTMDetail { MTM = mtmVal.ToString(), High = High.ToString(),Low = Low.ToString()});
+                    SetHighLowMTM(mtmVal);
                     if ((mtmVal >= TargerMTM || mtmVal <= MaxLossMTM) && !timerStop)
                     {
                         TimerStop();
@@ -69,6 +73,20 @@ namespace Trading_App.Common
             catch (Exception ex)
             {
                 OnError?.Invoke(ex.Message);
+            }
+        }
+
+        private void SetHighLowMTM(double mtmVal)
+        {
+            if(mtmVal>0)
+            {
+                if (High < mtmVal)
+                    High = mtmVal;
+            }
+            else
+            {
+                if (Low > mtmVal)
+                    Low = mtmVal;
             }
         }
 
@@ -98,5 +116,12 @@ namespace Trading_App.Common
             }
             OnMTMChanged = null;
         }
+    }
+
+    public struct MTMDetail
+    {
+        public string MTM { get; set; }
+        public string High { get; set; }
+        public string Low { get; set; }
     }
 }

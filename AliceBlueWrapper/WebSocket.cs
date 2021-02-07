@@ -12,11 +12,11 @@ namespace AliceBlueWrapper
     public delegate void OnErrorHandler(string errorMessage);
     public delegate void OnDataHandler(byte[] data, int count, string messageType);
 
-    public class WebSocket: IWebSocket
+    public class WebSocket : IWebSocket
     {
         ClientWebSocket socket;
         string socketUrl;
-        int _bufferLength;
+        int _bufferLength = 999999999;
         public event OnConnectHandler OnConnect;
         public event OnCloseHandler OnClose;
         public event OnDataHandler OnData;
@@ -67,36 +67,33 @@ namespace AliceBlueWrapper
             try
             {
                 callback = t =>
-                 {
-                     try
-                     {
-                         if (t.Status != TaskStatus.Canceled)
-                         {
-                             byte[] tempBuff = new byte[_bufferLength];
-                             int offset = t.Result.Count;
-                             bool endOfMessage = t.Result.EndOfMessage;
-                             // if chunk has even more data yet to recieve do that synchronously
-                             while (!endOfMessage)
-                             {
-                                 WebSocketReceiveResult result = socket.ReceiveAsync(new ArraySegment<byte>(tempBuff), CancellationToken.None).Result;
-                                 Array.Copy(tempBuff, 0, buffer, offset, result.Count);
-                                 offset += result.Count;
-                                 endOfMessage = result.EndOfMessage;
-                             }
-                             // send data to process
-                             OnData?.Invoke(buffer, offset, t.Result.MessageType.ToString());
-                             // Again try to receive data
-                             socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).ContinueWith(callback);
-                         }
-                     }
-                     catch (Exception e)
-                     {
-                         if (IsConnected())
-                             OnError?.Invoke("Error while recieving data. Message:  " + e.Message);
-                         else
-                             OnError?.Invoke("Lost ticker connection.");
-                     }
-                 };
+                {
+                    try
+                    {
+                        byte[] tempBuff = new byte[_bufferLength];
+                        int offset = t.Result.Count;
+                        bool endOfMessage = t.Result.EndOfMessage;
+                        // if chunk has even more data yet to recieve do that synchronously
+                        while (!endOfMessage)
+                        {
+                            WebSocketReceiveResult result = socket.ReceiveAsync(new ArraySegment<byte>(tempBuff), CancellationToken.None).Result;
+                            Array.Copy(tempBuff, 0, buffer, offset, result.Count);
+                            offset += result.Count;
+                            endOfMessage = result.EndOfMessage;
+                        }
+                        // send data to process
+                        OnData?.Invoke(buffer, offset, t.Result.MessageType.ToString());
+                        // Again try to receive data
+                        socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).ContinueWith(callback);
+                    }
+                    catch (Exception e)
+                    {
+                        if (IsConnected())
+                            OnError?.Invoke("Error while recieving data. Message:  " + e.Message);
+                        else
+                            OnError?.Invoke("Lost ticker connection.");
+                    }
+                };
 
                 // To start the receive loop in the beginning
                 socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).ContinueWith(callback);

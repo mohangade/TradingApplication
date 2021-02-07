@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Text;
 using System.Xml;
-using Trading_App.Model;
+using ApiProcessor.Model;
 
-namespace Trading_App
+namespace ApiProcessor
 {
     public class Helper 
     {       

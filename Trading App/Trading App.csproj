@@ -13,18 +13,10 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Apis.Gmail.v1" Version="1.49.0.2088" />
-    <PackageReference Include="HtmlAgilityPack.NetCore" Version="1.5.0.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AliceBlueWrapper\AliceBlueWrapper.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="AliceBlueWrapper">
-      <HintPath>References\AliceBlueWrapper.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\ApiProcessor\ApiProcessor.csproj" />
   </ItemGroup>
 
   <ItemGroup>

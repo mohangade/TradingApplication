@@ -5,7 +5,8 @@ using System.Text;
 namespace AliceBlueWrapper.Models
 {
     public class Instrument
-    {        
+    {
+        public string trading_symbol { get; set; }
         public string symbol { get; set; }
         public string lotSize { get; set; }
         public string expiry { get; set; }

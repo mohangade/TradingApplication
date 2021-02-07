@@ -1,6 +1,7 @@
 ﻿using AliceBlueWrapper;
 using AliceBlueWrapper.Models;
-
+using ApiProcessor;
+using ApiProcessor.Model;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,8 +13,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using Trading_App.Common;
-using Trading_App.Model;
-using Trading_App.Processor;
 
 namespace Trading_App
 {
@@ -27,7 +26,8 @@ namespace Trading_App
         private TradeSetting tradeSetting;
         private GmailConnect gmailConnect;
         private MTMConnect mtmConnect;
-        APIProcessor apiProcessor;
+        private TickerConnect tickerConnect;
+        BaseProcessor apiProcessor;
         Helper helper;
         #endregion
 
@@ -38,7 +38,7 @@ namespace Trading_App
             helper = new Helper();
             tradeSetting = helper.ReadSetting();
             //SetGmailSetting();
-            apiProcessor = new APIProcessor(tradeSetting, helper);
+            apiProcessor = new BaseProcessor(tradeSetting, helper);
             apiProcessor.LoadMasterContract();
             apiProcessor.LogAdded += LogAdded;
 
@@ -46,10 +46,38 @@ namespace Trading_App
             mtmConnect.OnMTMChanged += UpdateMTM;
             mtmConnect.OnMTMTargetHit += MTMTargetHit;
             mtmConnect.OnError += MTMConnectError;
+
+            tickerConnect = new TickerConnect(apiProcessor);
+            tickerConnect.OnTickerChanged += TickerConnect_OnTickerChanged;
+            tickerConnect.OnError += MTMConnectError;
+
             CheckToken();
             InitializeSetting();
+            SubscribeTicker();
         }
-
+        private void TickerConnect_OnTickerChanged(List<SubscribeToken> subscribeTokens)
+        {
+            Dispatcher.BeginInvoke(new TickerHandler(SetTiker), new object[] { subscribeTokens });
+        }
+        private void SetTiker(List<SubscribeToken> subscribeTokens )
+        {
+            string val = string.Empty;
+            foreach (var item in subscribeTokens)
+            {
+                //val += " " + item.Tick.LastPrice;
+                val += Environment.NewLine + item.Symbol + " : " + item.Tick.LastPrice;
+            }
+            txtLogs.Text = val;
+            //tblMTM.Text = val;
+            //strategyConnect.Strike = value;
+        }
+        public void SubscribeTicker()
+        {
+            if (chkTokenGenerated.IsChecked == true)
+            {
+                tickerConnect.SubscribeTicker(tradeSetting.Token);
+            }
+        }
         private void InitializeSetting()
         {
             txtMaxProfit.Text = tradeSetting.MTMProfit;
@@ -119,7 +147,7 @@ namespace Trading_App
 
                 apiProcessor.IsCEChecked = Convert.ToBoolean(chkCallChecked.IsChecked);
                 apiProcessor.IsPEChecked = Convert.ToBoolean(chkPutChecked.IsChecked);
-
+                apiProcessor.UserTransType = comboBoxBUYSELL.Text;
                 apiProcessor.IsStrangleChecked = Convert.ToBoolean(chkStrangleChecked.IsChecked);
                 apiProcessor.Strike = Convert.ToInt32(txtStrike.Text);
 
@@ -134,7 +162,7 @@ namespace Trading_App
                 await apiProcessor.PlaceEntryOrder();
                 System.Threading.Thread.Sleep(10000);
                 await apiProcessor.GetOrderHistory();
-                await apiProcessor.PlaceStopLossOrder(apiProcessor.ExecutedOrders);
+                //await apiProcessor.PlaceStopLossOrder(apiProcessor.ExecutedOrders);
                 btnEntry.IsEnabled = true;
             }
             catch (Exception ex)
@@ -150,7 +178,7 @@ namespace Trading_App
                 btnToken.IsEnabled = false;
                 await apiProcessor.Login();
                 chkTokenGenerated.IsChecked = true;
-                btnToken.IsEnabled = true;
+                btnToken.IsEnabled = true;               
             }
             catch (Exception ex)
             {
@@ -244,7 +272,7 @@ namespace Trading_App
             {
                 LogAdded(message);
                 string finalMTM = mtmConnect.GetFinalMTM().ToString();
-                UpdateMTM(finalMTM);
+                UpdateMTM(new MTMDetail { MTM = finalMTM});
                 Dispatcher.BeginInvoke(new Action(StopMTM), null);
             }
             catch (Exception ex)
@@ -252,11 +280,11 @@ namespace Trading_App
                 LogAdded(ex.Message);
             }
         }
-        private void SetMTM(string mtmVal)
+        private void SetMTM(MTMDetail mtmVal)
         {
-            tblMTM.Text = mtmVal;
+            tblMTM.Text = mtmVal.MTM;
         }
-        private void UpdateMTM(string mtmVal)
+        private void UpdateMTM(MTMDetail mtmVal)
         {
             Dispatcher.BeginInvoke(new MTMHandler(SetMTM), new object[] { mtmVal });
         }

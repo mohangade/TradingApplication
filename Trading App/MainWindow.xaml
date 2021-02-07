@@ -75,8 +75,11 @@
 
         <TextBlock  Grid.Row="4" Grid.Column="5" Margin="0,0,0,10" ><Run Text="SL in % : "/></TextBlock>
         <TextBlock  Grid.Row="4" Grid.Column="6" Margin="0,0,0,10" Foreground="White" x:Name="tblSL" ></TextBlock>
-
-        <Button Grid.Row="5" Grid.Column="1" Width="60" Content="Entry" HorizontalAlignment="Left" Name="btnEntry" Margin="0,0,0,10" Click="btnEntry_Click"/>
+        <ComboBox Name="comboBoxBUYSELL" Grid.Row="5" Grid.Column="1" Width="60" HorizontalAlignment="Left" Margin="0,0,0,10">
+            <ComboBoxItem IsSelected="True">SELL</ComboBoxItem>
+            <ComboBoxItem>BUY</ComboBoxItem>
+        </ComboBox>
+        <Button Grid.Row="5" Grid.Column="1" Width="60" Content="Entry"  Name="btnEntry" Margin="60,0,0,10" Click="btnEntry_Click"/>
         <Button Grid.Row="5" Grid.Column="2" Width="60" Content="Exit" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnExit" Click="btnExit_Click"></Button>
         <!--<Button Grid.Row="6" Grid.Column="2" Width="60" Content="Exit PE" Margin="0,0,0,10" HorizontalAlignment="Left" Name="btnPEExit" Click="btnPEExit_Click" ></Button>
         <Button Grid.Row="6" Grid.Column="3" Width="70" Content="Exit CE" Margin="10,0,0,10" HorizontalAlignment="Left" Name="btnCEExit" Click="btnCEExit_Click" ></Button>-->

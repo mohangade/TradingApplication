@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AliceBlueWrapper", "AliceBl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trading App", "Trading App\Trading App.csproj", "{12706116-E002-4245-97BF-3905644BEF7D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AlgoEngine", "AlgoEngine\AlgoEngine.csproj", "{81C989F7-25A1-4AFA-9BFC-4979514AF96C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiProcessor", "ApiProcessor\ApiProcessor.csproj", "{E7DA263E-1CEA-4BDF-914A-A1AA183563FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{12706116-E002-4245-97BF-3905644BEF7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{12706116-E002-4245-97BF-3905644BEF7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{12706116-E002-4245-97BF-3905644BEF7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81C989F7-25A1-4AFA-9BFC-4979514AF96C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81C989F7-25A1-4AFA-9BFC-4979514AF96C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81C989F7-25A1-4AFA-9BFC-4979514AF96C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81C989F7-25A1-4AFA-9BFC-4979514AF96C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7DA263E-1CEA-4BDF-914A-A1AA183563FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7DA263E-1CEA-4BDF-914A-A1AA183563FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7DA263E-1CEA-4BDF-914A-A1AA183563FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7DA263E-1CEA-4BDF-914A-A1AA183563FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
