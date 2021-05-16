@@ -1,0 +1,21 @@
+﻿<Window x:Class="Trading_App.TestForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Trading_App"
+        mc:Ignorable="d"
+        Title="TestForm" Height="450" Width="800">
+    <Grid>
+        <TabControl>
+            <TabItem Header="Main Form" IsSelected="True">
+               
+            </TabItem>
+            <TabItem Header="Telegram" >
+                
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+        </TabControl>
+
+    </Grid>
+</Window>

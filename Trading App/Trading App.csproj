@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AlgoEngine\AlgoEngine.csproj" />
     <ProjectReference Include="..\ApiProcessor\ApiProcessor.csproj" />
   </ItemGroup>
 
@@ -37,6 +38,12 @@
 
   <ItemGroup>
     <Folder Include="References\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="MainWindow - Copy.xaml">
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
 
 </Project>

@@ -12,27 +12,30 @@ using Newtonsoft.Json.Linq;
 
 namespace ApiProcessor
 {
-    public delegate void OnLogHandler(string logMessage);
+    public delegate void LogHandler(string logMessage);
     public class BaseProcessor : IDisposable
     {
         #region Private Variables
         private List<Order> pendingOrders;
         private List<Order> completedOrder;
         private AliceBlue aliceBlue;
-        private Model.TradeSetting tradeSetting;
+        private TradeSetting tradeSetting;
         private List<Instrument> masterContact;
         private Helper helper;
 
         #endregion
 
-        public bool IsStrangleChecked = false;
-        public int OTMDiff = 0;
+        public bool IsStrangle = false;
+        public bool IsCEOrder = false;
+        public bool IsPEOrder = false;
+
+        public int OtmDifference { get; set; }
         public int ExitOrderRetryCount = 3;
-        public event OnLogHandler LogAdded;
+        public event LogHandler LogAdded;
         public int Strike { get; set; }
-        public CashDetail Cash { get; set; }
-        public bool IsCEChecked = false;
-        public bool IsPEChecked = false;
+        public int CEStrike { get; set; }
+        public int PEStrike { get; set; }
+        public CashDetail Cash { get; set; }       
         public string UserTransType { get; set; }
         public List<OrderResponse> ExecutedOrders { get; set; }
         public BaseProcessor(TradeSetting tradeSetting, Helper helper)
@@ -50,8 +53,12 @@ namespace ApiProcessor
             {
                 string masterContractJson =
                 System.IO.File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}\\Data\\contract.json");
-                JToken jToken = JToken.Parse(masterContractJson).SelectToken("$.NSE-OPT");
-                masterContact = JsonConvert.DeserializeObject<List<Instrument>>(jToken.ToString());
+                string path = "$.NSE-OPT";
+                JToken jToken = JToken.Parse(masterContractJson).SelectToken(path);
+                if(jToken!= null)
+                    masterContact = JsonConvert.DeserializeObject<List<Instrument>>(jToken.ToString());
+                else
+                     LogAdded(path + " not found");
             }
             catch (Exception ex)
             {
@@ -118,44 +125,57 @@ namespace ApiProcessor
             try
             {
                 OrderResponse response = null;
-                float ceStrike = Strike;
-                float peStrike = Strike;
-
-                if (IsStrangleChecked)
+                if (Strike > 0)
                 {
-                    ceStrike = Strike + OTMDiff;
-                    peStrike = Strike - OTMDiff;
+                    if (IsStrangle)
+                    {
+                        CEStrike = Strike + OtmDifference;
+                        PEStrike = Strike - OtmDifference;
+                    }
+                    else
+                    {
+                        CEStrike = Strike;
+                        PEStrike = Strike;
+                    } 
                 }
+                else
+                {
+                    if (CEStrike > 0 && PEStrike > 0)
+                        LogAdded("Placing order from strategy");
+                    else
+                        return;
+                }
+                
 
                 //place CE order
-                if (IsCEChecked)
+                if (IsCEOrder)
                 {
                     response = await aliceBlue.PlaceOrder(tradeSetting.Token,
                         new Order
                         {
                             order_type = OrderType.Market,
-                            instrument_token = GetInstrumentTokenForFNO($"BANKNIFTY{tradeSetting.ExpiryWeek}{ceStrike}CE").code,
+                            instrument_token = GetInstrumentTokenForFNO($"BANKNIFTY {tradeSetting.ExpiryWeek} {CEStrike.ToString()}.0 CE"),
                             quantity = tradeSetting.Quantity,
                             transaction_type = UserTransType,
                             product = ProductType.Intraday
                         });
                     ExecutedOrders.Add(response);
-                    LogAdded($"BANKNIFTY{tradeSetting.ExpiryWeek}{ceStrike}CE  : {response.message} status: {response.status}");
+                    LogAdded($"BANKNIFTY{tradeSetting.ExpiryWeek}{CEStrike}CE  : {response.message} status: {response.status}");
                 }
                 //place PE order
-                if (IsPEChecked)
+                if (IsPEOrder)
                 {
                     response = await aliceBlue.PlaceOrder(tradeSetting.Token,
                      new Order
                      {
                          order_type = OrderType.Market,
-                         instrument_token = GetInstrumentTokenForFNO($"BANKNIFTY{tradeSetting.ExpiryWeek}{peStrike}PE").code,
+                         instrument_token = GetInstrumentTokenForFNO($"BANKNIFTY {tradeSetting.ExpiryWeek} {PEStrike.ToString()}.0 PE"),
                          quantity = tradeSetting.Quantity,
                          transaction_type = UserTransType,
                          product = ProductType.Intraday
                      });
                     ExecutedOrders.Add(response);
-                    LogAdded($"BANKNIFTY{tradeSetting.ExpiryWeek}{peStrike}PE  : {response.message} status: {response.status}");
+                    LogAdded($"BANKNIFTY{tradeSetting.ExpiryWeek}{PEStrike}PE  : {response.message} status: {response.status}");
                 }
             }
             catch (Exception ex)
@@ -245,14 +265,7 @@ namespace ApiProcessor
             }
         }
 
-        //public async Task GetTradeBook()
-        //{
-        //    string tradeBook = await aliceBlue.GetTradeBook(tradeSetting.Token);
-        //}
-        //public async Task GetCashDetails()
-        //{
-        //    Cash = await aliceBlue.GetCash(tradeSetting.Token);
-        //}
+      
         public async Task CancelAllPendingOrder()
         {
             foreach (var order in pendingOrders)
@@ -338,10 +351,17 @@ namespace ApiProcessor
                 LogAdded(ex.Message);
             }
         }
-        private Instrument GetInstrumentTokenForFNO(string trading_symbol)
+        public string GetInstrumentTokenForFNO(string trading_symbol)
         {
-            Instrument ins = masterContact.Single(x => x.trading_symbol.Contains(trading_symbol));
-            return ins;
+            Instrument ins = masterContact.Single(x => x.symbol.Contains(trading_symbol));
+            return ins.code;
+        }
+        public string Token
+        {
+            get
+            {
+                return tradeSetting.Token;
+            }
         }
         public void Dispose()
         {

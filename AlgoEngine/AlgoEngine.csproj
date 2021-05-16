@@ -8,4 +8,9 @@
     <Folder Include="Strategy\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AliceBlueWrapper\AliceBlueWrapper.csproj" />
+    <ProjectReference Include="..\ApiProcessor\ApiProcessor.csproj" />
+  </ItemGroup>
+
 </Project>

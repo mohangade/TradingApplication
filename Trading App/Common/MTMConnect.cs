@@ -11,7 +11,6 @@ using System.Timers;
 namespace Trading_App.Common
 {
     public delegate void MTMHandler(MTMDetail mTMDetail);
-    public delegate void LogHandler(string message);
     public class MTMConnect : IDisposable
     {
 
@@ -38,8 +37,6 @@ namespace Trading_App.Common
         }
         public void TimerStart()
         {
-            //double.TryParse(apiProcessor.TargetMTM, out targerMTM);
-            //double.TryParse(apiProcessor.MaxMTMLoss, out maxLossMTM);
             timer.Elapsed += new ElapsedEventHandler(Timer_Elapsed);
             timer.Start();
             timerStop = false;
@@ -59,8 +56,8 @@ namespace Trading_App.Common
                 if (dayPosition.data.positions.Any())
                 {
                     double mtmVal = GetMTMValue(dayPosition);
-                    OnMTMChanged?.Invoke(new MTMDetail { MTM = mtmVal.ToString(), High = High.ToString(),Low = Low.ToString()});
                     SetHighLowMTM(mtmVal);
+                    OnMTMChanged?.Invoke(new MTMDetail { MTM = mtmVal.ToString(), High = High.ToString(),Low = Low.ToString()});                    
                     if ((mtmVal >= TargerMTM || mtmVal <= MaxLossMTM) && !timerStop)
                     {
                         TimerStop();

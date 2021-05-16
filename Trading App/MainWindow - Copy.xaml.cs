@@ -1,5 +1,4 @@
-﻿using AlgoEngine;
-using AliceBlueWrapper.Models;
+﻿using AliceBlueWrapper.Models;
 using ApiProcessor;
 using ApiProcessor.Common;
 using ApiProcessor.Model;
@@ -15,19 +14,18 @@ namespace Trading_App
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindowTest : Window
     {
         #region Private Variables
         private TradeSetting tradeSetting;
         private GmailConnect gmailConnect;
         private MTMConnect mtmConnect;
         private TickerHelper tickerConnect;
-        private DumbStraddle dumbStraddle = new DumbStraddle();
         BaseProcessor apiProcessor;
         Helper helper;
         #endregion
 
-        public MainWindow()
+        public MainWindowTest()
         {
             InitializeComponent();
 
@@ -46,16 +44,15 @@ namespace Trading_App
             tickerConnect = new TickerHelper(apiProcessor);
             tickerConnect.OnTickerChanged += TickerConnect_OnTickerChanged;
             tickerConnect.OnError += MTMConnectError;
-            //Instrument bankNiftyInst = new Instrument
-            //{
-            //    code = "26009",
-            //    symbol = "Nifty Bank",
-            //    exchange = "1"
-            //};
-            //tickerConnect.SubscribeToken(bankNiftyInst);
+            Instrument bankNiftyInst = new Instrument
+            {
+                code = "26009",
+                symbol = "Nifty Bank",
+                exchange = "1"
+            };
+            tickerConnect.SubscribeToken(bankNiftyInst);
             CheckToken();
             InitializeSetting();
-          
         }
         private void TickerConnect_OnTickerChanged(List<SubscribeToken> subscribeTokens)
         {
@@ -183,12 +180,11 @@ namespace Trading_App
 
         private async void btnExit_Click(object sender, RoutedEventArgs e)
         {
-            dumbStraddle.RunStrategy();
-            //btnExit.IsEnabled = false;
-            //apiProcessor.ExitOrderRetryCount = 3;
-            //await apiProcessor.ExitAllOrders();
+            btnExit.IsEnabled = false;
+            apiProcessor.ExitOrderRetryCount = 3;
+            await apiProcessor.ExitAllOrders();
 
-            //btnExit.IsEnabled = true;
+            btnExit.IsEnabled = true;
         }
 
         private void btnMTMExit_Click(object sender, RoutedEventArgs e)

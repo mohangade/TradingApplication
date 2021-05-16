@@ -10,7 +10,7 @@ namespace AliceBlueWrapper
     {
 
         private IWebSocket _ws;
-        private string token;
+        public string Token;
         private readonly string base_url = "wss://ant.aliceblueonline.com/hydrasocket/v2/websocket?access_token={0}";
         bool IsConnected = false;
         public string bankNiftyValue = string.Empty;
@@ -18,7 +18,7 @@ namespace AliceBlueWrapper
         public event OnTickHandler OnTick;
         public TickerTape(string accessToken)
         {
-            token = accessToken;
+            Token = accessToken;
 
             if (_ws == null)
                 _ws = new WebSocket();
@@ -28,7 +28,7 @@ namespace AliceBlueWrapper
             _ws.OnClose += _ws_OnClose;
             _ws.OnError += _ws_OnError;
 
-            string url = string.Format(base_url, token);
+            string url = string.Format(base_url, Token);
             _ws.Connect(url);
 
         }
@@ -86,27 +86,55 @@ namespace AliceBlueWrapper
         /// Subscribe to a list of instrument_tokens.
         /// </summary>
         /// <param name="Tokens">List of instrument instrument_tokens to subscribe</param>
-        public void Subscribe(int exhange, int instrumentToken)
+        public void Subscribe(int exchange, List<int> instrumentTokens)
         {
-            //if (Tokens.Length == 0) return;
-
-            //string msg = "{\"a\":\"subscribe\",\"v\":[" + String.Join(",", Tokens) + "]}";
-
-            //msg = "{\"a\": \"subscribe\", \"v\": [[1, 26009]], \"m\": \"marketdata\"}";//working bank nifty
-
-           string msg = "{\"a\": \"subscribe\", \"v\": [[" + exhange+"," +instrumentToken+"]], \"m\": \"marketdata\"}";//working silverm
-
-           // msg = "{\"a\": \"subscribe\", \"v\": [[4, 219001],[4, 224233]], \"m\": \"marketdata\"}";//working silverm
-            
+            if (exchange <= 0 && instrumentTokens.Count <= 0)
+                return;
+            List<string> stringTokens = new List<string>();
+            foreach (var token in instrumentTokens)
+            {
+                stringTokens.Add("[" + exchange + "," + token + "]");
+            }            
+            string msg = "{\"a\": \"subscribe\", \"v\": [" + string.Join(",", stringTokens) + "], \"m\": \"marketdata\"}";//working silverm
 
             if (IsConnected)
                 _ws.Send(msg);
-            //msg = "{\"a\": \"subscribe\", \"v\": [[4, 224233]], \"m\": \"marketdata\"}";//working silverm
-            //if (IsConnected)
-            //    _ws.Send(msg);
-
         }
 
+        public void Subscribe(int exchange, int instrumentToken)
+        {
+            if (exchange <= 0 && instrumentToken <= 0)
+                return;
+
+            string msg = "{\"a\": \"subscribe\", \"v\": [[" + exchange + "," + instrumentToken + "]], \"m\": \"marketdata\"}";//working silverm
+            if (IsConnected)
+                _ws.Send(msg);
+        }
+        public void UnSubscribe(int exchange, int instrumentToken)
+        {
+            if (exchange <= 0 && instrumentToken <= 0)
+                return;
+
+            string msg = "{\"a\": \"unsubscribe\", \"v\": [[" + exchange + "," + instrumentToken + "]], \"m\": \"marketdata\"}";//working silverm
+            if (IsConnected)
+                _ws.Send(msg);
+        }
+      
+        public void UnSubscribe(int exchange, List<int> instrumentTokens)
+        {
+            if (exchange <= 0 && instrumentTokens.Count <= 0)
+                return;
+
+            List<string> stringTokens = new List<string>();
+            foreach (var token in instrumentTokens)
+            {
+                stringTokens.Add("[" + exchange + "," + token + "]");
+            }
+            string msg = "{\"a\": \"unsubscribe\", \"v\": [" + string.Join(",", stringTokens) + "], \"m\": \"marketdata\"}";//working silverm
+
+            if (IsConnected)
+                _ws.Send(msg);
+        }
         public void Dispose()
         {
             if (_ws != null && IsConnected)
